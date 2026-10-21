@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path_provider/path_provider.dart';
+
 import '../models/thought.dart';
 
 /// Erreur de lecture : les données existantes n’ont pas pu être chargées.
@@ -59,33 +61,55 @@ class UnavailableThoughtStorage implements ThoughtStorage {
 ///
 /// Ce fichier n’est ni chiffré ni sauvegardé par l’application.
 class FileThoughtStorage implements ThoughtStorage {
-  FileThoughtStorage(this.file);
+  FileThoughtStorage(this.file, {this.legacyFile});
 
-  /// Emplacement par défaut, dans le conteneur de l’application
-  /// (`Library/Application Support` sur iOS).
-  factory FileThoughtStorage.defaultLocation() {
-    final home = Platform.environment['HOME'];
-    if (home == null || home.isEmpty) {
-      throw const StorageReadException('Dossier de l’application introuvable.');
-    }
+  /// Emplacement par défaut dans le conteneur privé de l’application.
+  static Future<FileThoughtStorage> defaultLocation() async {
+    final directory = await getApplicationSupportDirectory();
     return FileThoughtStorage(
-      File('$home/Library/Application Support/thought_inbox/thoughts.json'),
+      File('${directory.path}/thoughts.json'),
+      legacyFile: File('${directory.path}/thought_inbox/thoughts.json'),
     );
   }
 
   static const _formatVersion = 1;
 
   final File file;
+  final File? legacyFile;
 
   @override
   Future<List<Thought>> load() async {
-    final String? content;
+    final File source;
     try {
-      content = await file.exists() ? await file.readAsString() : null;
+      if (await file.exists()) {
+        source = file;
+      } else if (legacyFile != null && await legacyFile!.exists()) {
+        source = legacyFile!;
+      } else {
+        return [];
+      }
     } on Object catch (error) {
       throw StorageReadException('Lecture du fichier impossible.', error);
     }
-    if (content == null) return [];
+
+    final thoughts = await _read(source);
+    if (source.path == file.path) return thoughts;
+
+    try {
+      await save(thoughts);
+    } on Object catch (error) {
+      throw StorageReadException('Migration des données impossible.', error);
+    }
+    return thoughts;
+  }
+
+  Future<List<Thought>> _read(File source) async {
+    final String content;
+    try {
+      content = await source.readAsString();
+    } on Object catch (error) {
+      throw StorageReadException('Lecture du fichier impossible.', error);
+    }
     try {
       final decoded = jsonDecode(content);
       if (decoded is! Map<String, Object?>) {

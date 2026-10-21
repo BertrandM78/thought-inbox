@@ -1,39 +1,58 @@
 # Thought Inbox
 
-**Un endroit calme pour déposer une pensée, puis y revenir.**
+**A calm place to drop a thought and come back to it later.**
 
-Thought Inbox est un projet personnel d’application mobile Flutter. Son ambition : capturer une idée au moment où elle arrive, sans devoir immédiatement la classer ou la transformer en tâche.
+Thought Inbox is a personal Flutter app for capturing a thought the moment it arrives, without a title, a category or a due date. The interface is in French. iOS is the first target. The project is in development, and no App Store release is planned yet.
 
-> En développement. Ce dépôt expose la démarche produit et la progression du prototype ; aucune version distribuée sur l’App Store n’est encore disponible.
+## Visual reference
 
-## Le premier parcours
+Two reference screens define the visual direction. They are design images, not yet reproduced in Flutter.
 
-1. Écrire une pensée et l’ajouter à l’inbox.
-2. Retrouver les pensées récentes en premier.
-3. Archiver une pensée et la restaurer si nécessaire.
-4. Retrouver ses données après avoir fermé puis relancé l’application.
+| Capture | To process |
+| --- | --- |
+| ![Capture reference](docs/design/reference/capture-empty.png) | ![To process reference](docs/design/reference/inbox-populated.png) |
 
-L’interface vise une expérience simple, en français, avec un accent violet lavande. Les données du prototype restent sur l’appareil, sans compte ni service distant. Le stockage local de ce premier jalon n’est pas un coffre chiffré ni une sauvegarde ; désinstaller l’application peut effacer les données.
+The direction is a warm background, editorial serif typography, sans-serif metadata, rounded white cards and a violet accent. Exact fonts, sizes and colours are not yet confirmed.
 
-## État du projet
+## Current state (21 October 2026)
 
-Le premier milestone est spécifié dans [PRODUCT.md](docs/PRODUCT.md). La saisie, l’inbox, les archives et la persistance dans un fichier JSON local sont implémentées. **27 tests automatisés passent et l’analyse statique Dart ne signale aucun problème. Le parcours sur simulateur iOS reste à valider**, en particulier la conservation des données après fermeture complète. L’état détaillé est consigné dans [MILESTONE-1.md](docs/MILESTONE-1.md).
+**Implemented in code**
 
-Les idées suivantes restent hors de ce premier jalon : synchronisation, IA, notifications, capture vocale, tags et monétisation. Elles ne constituent pas des fonctionnalités disponibles ou promises.
+- Multi-line capture with a "Déposer" action. Input is trimmed, and blank input is refused.
+- Inbox sorted newest first, with archive and restore, and an Archives tab.
+- Local JSON storage through `path_provider`, written to a temporary file and then renamed.
+- Loading, empty and error states. A failed write keeps the typed text and shows a message.
+- Model, storage, controller and widget tests.
 
-## Lancer le projet
+**Not done yet**
 
-Prérequis : Flutter stable compatible avec la contrainte Dart de `pubspec.yaml` (Dart `^3.13.5`), et Xcode pour le simulateur iOS. Seule la cible iOS est actuellement incluse dans le dépôt.
+- The two reference screens are not reproduced. The current UI is a single Material page with bottom tabs (Inbox / Archives).
+- The circle action on each card, the menu, and the "Plus tard" signature are not implemented.
+- The three suggestion chips (Phone, Reminders, Web search) appear only in the design reference. They are not integrations.
+- The test suite was re-run on 22 October 2026 after the storage migration changes: 29 tests passed.
+- Manual validation on an iOS simulator, including a full app restart, is pending.
+
+**Out of scope for the MVP**
+
+Accounts, backend, sync, AI, notifications, voice capture, editing, permanent deletion, search and third-party integrations.
+
+## Data and privacy
+
+Thoughts are stored only on the device, in an unencrypted JSON file. The app does not back them up, and deleting the app can delete them.
+
+## Getting started
+
+Requirements: a Flutter SDK compatible with the Dart constraint in `pubspec.yaml` (`^3.13.5`), Xcode and an iOS simulator.
 
 ```sh
 git clone https://github.com/BertrandM78/thought-inbox.git
 cd thought-inbox
 flutter pub get
 flutter devices
-flutter run -d <identifiant-du-simulateur>
+flutter run -d <simulator-id>
 ```
 
-## Vérifier une modification
+## Checks
 
 ```sh
 dart format --output=none --set-exit-if-changed lib test
@@ -41,17 +60,18 @@ flutter analyze
 flutter test
 ```
 
-## Organisation
+Visual changes also need a comparison with the reference screens on iOS at the same logical width, plus checks for the keyboard, small screens, large text and VoiceOver. See [docs/DESIGN.md](docs/DESIGN.md).
 
-- `lib/` : application Dart/Flutter — `models/` (pensée), `storage/` (stockage fichier), `state/` (état de l’inbox), `ui/` (écrans).
-- `test/` : tests automatisés.
-- `ios/` : intégration native iOS.
-- [docs/PRODUCT.md](docs/PRODUCT.md) : vision, périmètre et critères d’acceptation.
-- [CLAUDE.md](CLAUDE.md) : contexte et règles de travail pour Claude Code.
-- [docs/FIRST-PROMPT.md](docs/FIRST-PROMPT.md) : brief reproductible du premier milestone.
+## Documentation
 
-## Pourquoi partager ce travail
-
-Ce projet documente le passage d’une intention produit à une application utilisable : cadrage, expérience mobile, persistance locale et vérification. Le périmètre reste volontairement réduit pour terminer des parcours concrets avant d’ajouter des fonctionnalités.
-
-Les retours sur l’usage, la simplicité et l’accessibilité sont les bienvenus dans les issues. Merci de ne pas y publier de pensées personnelles ni d’informations sensibles.
+| File | Purpose |
+| --- | --- |
+| [PRODUCT.md](docs/PRODUCT.md) | Product intent, scope and status of each decision |
+| [DESIGN.md](docs/DESIGN.md) | Visual contract, open states and validation steps |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Flutter structure, data compatibility and conventions |
+| [ROADMAP.md](docs/ROADMAP.md) | Milestones M0 to M4, validation criteria and open decisions |
+| [AUDIT.md](docs/AUDIT.md) | Inspection of the existing project and known gaps |
+| [MILESTONE-1.md](docs/MILESTONE-1.md) | Record of the first functional milestone |
+| [FIRST-PROMPT.md](docs/FIRST-PROMPT.md) | Starting prompt for the next milestone |
+| [SECURITY-REVIEW.md](docs/SECURITY-REVIEW.md) | Pre-publication secret scan |
+| [CLAUDE.md](CLAUDE.md) | Working rules for AI-assisted sessions |

@@ -1,5 +1,7 @@
 # Milestone 1 — statut
 
+> Mise à jour documentaire du 21 octobre 2026 : le compte rendu ci-dessous décrit la version vérifiée le 20 octobre. Depuis, des modifications locales préexistantes remplacent le chemin fondé sur `HOME` par `path_provider` et rendent l’initialisation asynchrone. Leur validation automatique et iOS reste à refaire ; les 27 tests historiques ne prouvent pas l’état courant. Le passage aux deux écrans Lovable relève de M2/M3 dans [ROADMAP.md](ROADMAP.md). Conserver ce compte rendu comme historique, puis ajouter les résultats réellement obtenus.
+
 Spécifié le 20 octobre 2026. Implémenté avec Claude Code, relu et vérifié automatiquement le 20 octobre 2026 : **27 tests passent, analyse statique sans problème, formatage conforme**. Le jalon reste en attente de validation manuelle sur simulateur iOS.
 
 Voir [PRODUCT.md](PRODUCT.md) pour les critères d’acceptation. Ne pas considérer le jalon terminé tant que le statut ci-dessous ne décrit pas les vérifications réellement exécutées.

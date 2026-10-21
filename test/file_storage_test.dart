@@ -39,6 +39,32 @@ void main() {
     expect(File('${file.path}.tmp').existsSync(), isFalse);
   });
 
+  test('migre les données de l’ancien chemin sans les altérer', () async {
+    final legacyFile = File('${dir.path}/old/thoughts.json');
+    final storage = FileThoughtStorage(file, legacyFile: legacyFile);
+    await FileThoughtStorage(legacyFile).save(thoughts);
+
+    final reloaded = await storage.load();
+
+    expect(reloaded, thoughts);
+    expect(await FileThoughtStorage(file).load(), thoughts);
+    expect(await legacyFile.readAsString(), contains('"version":1'));
+  });
+
+  test('signale un échec de migration sans modifier la source', () async {
+    final legacyFile = File('${dir.path}/old/thoughts.json');
+    await FileThoughtStorage(legacyFile).save(thoughts);
+    final blockedDirectory = File('${dir.path}/blocked');
+    await blockedDirectory.writeAsString('not a directory');
+    final blockedFile = File('${blockedDirectory.path}/thoughts.json');
+
+    await expectLater(
+      FileThoughtStorage(blockedFile, legacyFile: legacyFile).load(),
+      throwsA(isA<StorageReadException>()),
+    );
+    expect(await FileThoughtStorage(legacyFile).load(), thoughts);
+  });
+
   test('signale un fichier illisible sans le modifier', () async {
     await file.parent.create(recursive: true);
     await file.writeAsString('{ pas du json');
