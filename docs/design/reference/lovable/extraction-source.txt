@@ -1,0 +1,473 @@
+Voici le document complet de spécification du Design System extrait directement du code source de l’application (« Plus tard »), structuré pour être immédiatement utilisé dans votre projet Flutter iOS sous `docs/DESIGN_SYSTEM.md`.
+
+*
+
+Design System — « Plus tard » (iOS Flutter Edition)
+
+> Document technique extrait fidèlement du code source de l'application web (`src/styles.css`, `src/routes/__root.tsx`, `src/routes/index.tsx`, `src/lib/thoughts.ts`).
+> Ne contient aucune estimation visuelle ni extrapolation arbitraire.
+
+---
+
+1. Vue d'ensemble & Philosophie visuelle
+
+L'application suit une esthétique éditoriale épurée d'inspiration iOS haut de gamme :
+- Fond chaud crémeux / sable (`--background`, `--device`), s'écartant du blanc froid natif.
+- Typographie bivalente : empattements littéraires contemporains (Newsreader) pour la pensée et les titres ; linéale technique et lisible (Inter Tight) pour l'UI, boutons, métadonnées et navigation.
+- Accentuation chromatique unique : une nuance de Lavande / Violet feutré (`--primary`) réservée aux actions principales, compteurs et raccourcis d'action.
+- Formes douces & continues : rayons de courbure prononcés (`rounded-full`, `rounded-2xl`, squircle iOS).
+
+---
+
+2. Palette de Couleurs
+
+Le code source définit ses jetons dans `src/styles.css` en notation CSS native OKLCH avec adaptation automatique au mode sombre (`@media (prefers-color-scheme: dark)`).
+Les équivalences sRGB et codes hexadécimaux ci-dessous sont calculées par conversion colorimétrique exacte D65.
+
+2.1 Mode Clair (Light Theme) — Par défaut
+
+| Jeton CSS (`src/styles.css`) | Valeur OKLCH source | Code HEX calculé | Flutter `Color(0xFF...)` | Usage dans l'application |
+| :--- | :--- | :--- | :--- | :--- |
+| `--background` | `oklch(0.975 0.006 75)` | `#F9F6F2` | `Color(0xFFF9F6F2)` | Fond principal de l'application (crème chaleureux) |
+| `--device` | `oklch(0.9 0.01 70)` | `#E2DDD7` | `Color(0xFFE2DDD7)` | Fond externe / marge du simulateur d'écran sur desktop |
+| `--foreground` | `oklch(0.2 0.012 60)` | `#1A1511` | `Color(0xFF1A1511)` | Texte principal (anthracite très chaud, pas de noir pur) |
+| `--card` | `oklch(0.995 0.003 75)` | `#FFFDFB` | `Color(0xFFFFFDFB)` | Surface des cartes de pensée (`bg-card`) |
+| `--card-foreground` | `oklch(0.2 0.012 60)` | `#1A1511` | `Color(0xFF1A1511)` | Texte à l'intérieur des cartes |
+| `--popover` | `oklch(0.995 0.003 75)` | `#FFFDFB` | `Color(0xFFFFFDFB)` | Surface de l'Action Sheet et modale simulée |
+| `--popover-foreground` | `oklch(0.2 0.012 60)` | `#1A1511` | `Color(0xFF1A1511)` | Texte des menus et feuilles modales |
+| `--primary` | `oklch(0.52 0.13 295)` | `#6F57AB` | `Color(0xFF6F57AB)` | Accent unique Lavande (boutons actifs, badge, caret) |
+| `--primary-foreground`| `oklch(0.99 0.005 295)` | `#FCFBFF` | `Color(0xFFFCFBFF)` | Texte sur fond lavande (blanc lavandé clair) |
+| `--primary-soft` | `oklch(0.94 0.035 295)` | `#ECE7FF` | `Color(0xFFECE7FF)` | Fond des badges suggestions (`bg-primary-soft`) |
+| `--secondary` | `oklch(0.94 0.008 75)` | `#EEEAE5` | `Color(0xFFEEEAE5)` | Bouton inactif, fond édition, bouton retour vide |
+| `--secondary-foreground`| `oklch(0.3 0.012 60)` | `#322C28` | `Color(0xFF322C28)` | Texte sur bouton secondaire |
+| `--muted` | `oklch(0.94 0.008 75)` | `#EEEAE5` | `Color(0xFFEEEAE5)` | Fond discret secondaire |
+| `--muted-foreground` | `oklch(0.55 0.012 60)` | `#77706B` | `Color(0xFF77706B)` | Horodatages, placeholders, textes tertiaires |
+| `--border` / `--input`| `oklch(0.9 0.008 75)` | `#E1DDD8` | `Color(0xFFE1DDD8)` | Séparateurs divider dans les sheets |
+| `--success` | `oklch(0.62 0.12 155)` | `#3F9B65` | `Color(0xFF3F9B65)` | Point vert indicateur de dépôt réussi |
+| `--destructive` | `oklch(0.58 0.2 25)` | `#D73337` | `Color(0xFFD73337)` | Option « Supprimer » dans l'action sheet |
+| `--destructive-foreground` | `oklch(0.99 0 0)` | `#FCFCFC` | `Color(0xFFFCFCFC)` | Texte blanc sur bouton destructif |
+| `--ring` | `oklch(0.52 0.13 295 / 40%)` | `#6F57AB` (40%) | `Color(0x666F57AB)` | Contour de focus accessible |
+| Meta theme-color | (explicite dans `__root.tsx`) | `#F8F5F0` | `Color(0xFFF8F5F0)` | Teinte déclarée pour la status bar du navigateur |
+
+2.2 Mode Sombre (Dark Theme)
+
+Activé via requête média système `@media (prefers-color-scheme: dark)` dans `src/styles.css` :
+
+| Jeton CSS | Valeur OKLCH source | Code HEX calculé | Flutter `Color(0xFF...)` | Usage Dark |
+| :--- | :--- | :--- | :--- | :--- |
+| `--device` | `oklch(0.1 0.005 60)` | `#040302` | `Color(0xFF040302)` | Fond global container |
+| `--background` | `oklch(0.16 0.006 60)` | `#0F0D0B` | `Color(0xFF0F0D0B)` | Fond principal de l'app |
+| `--foreground` | `oklch(0.95 0.006 75)` | `#F1EEEA` | `Color(0xFFF1EEEA)` | Texte principal blanc chaud |
+| `--card` / `--popover` | `oklch(0.21 0.007 60)` | `#1B1815` | `Color(0xFF1B1815)` | Surface des cartes |
+| `--primary` | `oklch(0.74 0.12 295)` | `#B09BEE` | `Color(0xFFB09BEE)` | Lavande lumineuse pastel |
+| `--primary-foreground`| `oklch(0.16 0.02 295)` | `#0E0C15` | `Color(0xFF0E0C15)` | Texte sombre sur bouton lavande |
+| `--primary-soft` | `oklch(0.3 0.06 295)` | `#302749` | `Color(0xFF302749)` | Fond sombre des badges de suggestion |
+| `--secondary` / `--muted`| `oklch(0.25 0.007 60)` | `#24211E` | `Color(0xFF24211E)` | Surfaces secondaires sombres |
+| `--muted-foreground` | `oklch(0.65 0.01 70)` | `#938E89` | `Color(0xFF938E89)` | Métadonnées et textes atténués |
+| `--border` | `oklch(1 0 0 / 8%)` | `#FFFFFF` (8%) | `Color(0x14FFFFFF)` | Liserés et séparateurs translucides |
+| `--input` | `oklch(1 0 0 / 10%)` | `#FFFFFF` (10%) | `Color(0x1AFFFFFF)` | Champs de saisie translucides |
+
+2.3 Opacités et Couleurs Translucides Spécifiques (Inline dans `src/routes/index.tsx`)
+
+- Overlay du Bottom Sheet : `bg-foreground/25` avec flou `backdrop-blur-[2px]` :
+  - Light : `Color(0x401A1511)`
+  - Dark : `Color(0x40F1EEEA)`
+- Placeholder textarea de capture : `placeholder:text-muted-foreground/45` :
+  - Light : `Color(0x7377706B)`
+- Cercle état vide (dashed) : `border-muted-foreground/30` :
+  - Light : `Color(0x4D77706B)`
+- Bordure checkbox non cochée : `border-muted-foreground/40` :
+  - Light : `Color(0x6677706B)`
+- Bouton Déposer désactivé : texte `text-muted-foreground/60` sur fond `bg-secondary`.
+- Texte barré tâche terminée : `line-through decoration-primary/60` :
+  - Ligne de biffure lavande à 60% d'opacité (`Color(0x996F57AB)`).
+- Toast / SnackBar : fond `bg-foreground`, texte `text-background`, bouton annuler `text-primary-soft`.
+
+---
+
+3. Typographie
+
+3.1 Familles de polices importées (`src/routes/__root.tsx`)
+
+```html
+https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap
+```
+
+1. `Newsreader` (`font-serif`) :
+   - Variable Font avec axe optique `opsz` (6pt à 72pt).
+   - Graisses utilisées : `400` (Regular), `500` (Medium), `400 Italic`.
+   - Rôle : Titres, pensée brute de l'utilisateur, citations, marque.
+2. `Inter Tight` (`font-sans`) :
+   - Graisses utilisées : `400` (Regular), `500` (Medium), `600` (SemiBold).
+   - Rôle : Tous les éléments d'interface, boutons, étiquettes, compteurs chiffrés.
+
+3.2 Tableau des Styles Typographiques par Composant
+
+| Élément | Police | Taille (px) | Graisse (Weight) | Hauteur de ligne (`line-height`) | Espacement (`letter-spacing`) | Couleur |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Logo header Capture | `Newsreader` | 18px (`text-lg`) | 400 Italic (`italic`) | ~28px (défaut `text-lg`) | Normal | `text-muted-foreground` |
+| Pastille compteur header | `Inter Tight` | 11px (`text-[11px]`) | 600 (`font-semibold`) | Centré verticalement | Normal (`tabular-nums`) | `text-primary-foreground` |
+| Sur-titre Capture | `Inter Tight` | 13px (`text-[13px]`) | 500 (`font-medium`) | 18px (défaut) | `0.025em` (`tracking-wide`), `uppercase` | `text-muted-foreground` |
+| Textarea de Capture | `Newsreader` | 30px (`text-[30px]`) | 400 (hérité) | `1.2` (36px) | `-0.01em` (`-0.3px`) | `text-foreground` |
+| Indicateur / feedback dépôt | `Inter Tight` | 14px (`text-sm`) | 400 (Regular) | 20px | Normal | `text-muted-foreground` / `70%` |
+| Bouton « Déposer » | `Inter Tight` | 15px (`text-[15px]`) | 600 (`font-semibold`) | Centré (hauteur 44px) | Normal | `text-primary-foreground` |
+| Slogan pied de Capture | `Inter Tight` | 12px (`text-xs`) | 400 (Regular) | 16px | Normal | `text-muted-foreground/60` |
+| Bouton retour « Capturer »| `Inter Tight` | 16px (`text-[16px]`) | 500 (`font-medium`) | Centré (hauteur 44px) | Normal | `text-primary` |
+| Grand Titre « À traiter » | `Newsreader` | 38px (`text-[38px]`) | 400 (défaut `h1`) | `1.0` (`leading-none`, 38px) | `-0.02em` (`-0.76px`) | `text-foreground` |
+| Compteur « X en attente » | `Inter Tight` | 14px (`text-sm`) | 400 (Regular) | 20px | `tabular-nums` | `text-muted-foreground` |
+| Corps de la Pensée (Carte)| `Newsreader` | 18px (`text-[18px]`) | 400 (Regular) | `1.375` (`leading-snug`, 24.75px) | Normal | `text-card-foreground` |
+| Badge Suggestion Action | `Inter Tight` | 13px (`text-[13px]`) | 500 (`font-medium`) | Centré (hauteur 28px) | Normal | `text-primary` |
+| Horodatage relatif | `Inter Tight` | 12px (`text-[12px]`) | 400 (Regular) | 16px | Normal | `text-muted-foreground` |
+| Titre État Vide | `Newsreader` | 26px (`text-[26px]`) | 400 (Regular) | `1.25` (`leading-tight`, 32.5px) | Normal | `text-foreground` |
+| Sous-titre État Vide | `Inter Tight` | 15px (`text-[15px]`) | 400 (Regular) | 20px | Normal | `text-muted-foreground` |
+| Bouton État Vide | `Inter Tight` | 15px (`text-[15px]`) | 500 (`font-medium`) | Centré (hauteur 44px) | Normal | `text-secondary-foreground` |
+| Texte Toast / SnackBar | `Inter Tight` | 15px (`text-[15px]`) | 400 (Regular) | Centré (hauteur 56px) | Normal | `text-background` |
+| Bouton « Annuler » Toast | `Inter Tight` | 15px (hérité) | 600 (`font-semibold`) | Centré (hauteur 40px) | Normal | `text-primary-soft` |
+| Aperçu pensée (Menu Sheet)| `Newsreader` | 15px (`text-[15px]`) | 400 (Regular) | Normal, `line-clamp-2` | Normal | `text-muted-foreground` |
+| Lignes Action Sheet | `Inter Tight` | 17px (`text-[17px]`) | 400 (500 pour Terminer) | Centré (hauteur 56px) | Normal | `primary`, `foreground` ou `destructive` |
+| Bouton Fermer Sheet | `Inter Tight` | 17px (`text-[17px]`) | 600 (`font-semibold`) | Centré (hauteur 56px) | Normal | `text-foreground` |
+| Icône lettre modale app | `Newsreader` | 24px (`text-2xl`) | 400 (Regular) | Centré (taille 64x64px) | Normal | `text-primary-foreground` |
+
+---
+
+4. Rayons de Courbure (Border Radius)
+
+Définition des jetons racine : `--radius: 1rem;` (16px).
+
+| Forme | Valeur CSS / Classe Tailwind | Valeur en Pixels (Points iOS) | Éléments d'application cibles |
+| :--- | :--- | :--- | :--- |
+| Cercle / Pilule complète | `rounded-full` | `9999px` (`BorderRadius.circular(999)`) | Boutons principaux (« Déposer », « Revenir »), badges, checkboxes, bouton icône boîte |
+| Grande Courbure (Squircle) | `rounded-3xl` / `rounded-[3rem]` | `28px` / `48px` | `rounded-3xl` pour la fiche simulateur d'app (`28px`) ; `48px` pour le conteneur iPad/Desktop |
+| Courbure Standard Carte | `rounded-2xl` | `24px` (calculé `--radius-2xl`: `16px + 8px`) | Cartes de pensée (`Card`), Toast, conteneur d'Action Sheet iOS |
+| Courbure Moyenne | `rounded-xl` | `20px` (calculé `--radius-xl`: `16px + 4px`) | Bouton « Annuler » du Toast |
+| Courbure Icône Application| `rounded-[1.1rem]` | `17.6px` | Carré d'icône d'application dans la modale d'ouverture |
+| Petite Courbure | `rounded-lg` | `16px` (`var(--radius)`) | Zone de texte lors de l'édition directe en carte |
+
+---
+
+5. Ombres & Élévation (Box Shadows)
+
+5.1 Ombre de Carte (`--shadow-card` / classe `.shadow-card`)
+
+Composée de deux couches superposées :
+```css
+/* Light mode */
+box-shadow: 0 1px 2px oklch(0.2 0.02 60 / 4%), 0 8px 24px -12px oklch(0.2 0.02 60 / 10%);
+```
+Équivalent Flutter `BoxShadow` (Light) :
+```dart
+const cardShadow = [
+  BoxShadow(
+    offset: Offset(0, 1),
+    blurRadius: 2,
+    spreadRadius: 0,
+    color: Color(0x0A1A1511), // 4% d'opacité
+  ),
+  BoxShadow(
+    offset: Offset(0, 8),
+    blurRadius: 24,
+    spreadRadius: -12,
+    color: Color(0x1A1A1511), // 10% d'opacité
+  ),
+];
+```
+
+En Dark Mode :
+- Couche 1 intérieure : `inset 0 1px 0 rgba(255, 255, 255, 0.04)`
+- Couche 2 diffuse : `0 8px 24px -12px rgba(0, 0, 0, 0.50)`
+
+5.2 Ombre Portée Flottante (`--shadow-float` / classe `.shadow-float`)
+
+Utilisée sur le Toast et sur le simulateur d'appareil :
+```css
+/* Light mode */
+box-shadow: 0 20px 50px -20px oklch(0.4 0.1 295 / 35%);
+```
+Équivalent Flutter `BoxShadow` (Light) :
+```dart
+const floatShadow = [
+  BoxShadow(
+    offset: Offset(0, 20),
+    blurRadius: 50,
+    spreadRadius: -20,
+    color: Color(0x59533E89), // Lavande sombre à 35% d'opacité
+  ),
+];
+```
+
+---
+
+6. Composants & Spécifications Géométriques
+
+6.1 Boutons
+
+1. Bouton Principal « Déposer » :
+   - Hauteur : `44px` (`h-11`).
+   - Padding horizontal : `24px` (`px-6`).
+   - Rayon : `rounded-full` (`BorderRadius.circular(999)`).
+   - Fond : `bg-primary` (`#6F57AB`), au repos.
+   - État désactivé (`disabled`) : `bg-secondary` (`#EEEAE5`), texte `Color(0x9977706B)`.
+   - Interaction au toucher : `active:scale-95` (`scale(0.95)`).
+
+2. Bouton de navigation retour (« Capturer ») :
+   - Hauteur : `44px` (`h-11`).
+   - Padding : gauche `4px` (`pl-1`), droite `12px` (`pr-3`).
+   - Rayon : `rounded-full`.
+   - Couleur texte & chevron : `text-primary` (`#6F57AB`).
+   - Typographie : 16px, Regular/Medium.
+   - Interaction : `active:opacity-60`.
+
+3. Bouton Icône Boîte de Réception (Header Capture) :
+   - Dimensions : carré `44px × 44px` (`size-11`).
+   - Positionnement : marge négative `mr-[-8px]` (`-mr-2`) pour aligner l'axe de frappe tactile sur la marge droite.
+   - Rayon : `rounded-full`.
+   - Interaction : `active:scale-90 active:bg-secondary`.
+   - Pastille badge (si `count > 0`) :
+     - Position : `top: 6px`, `right: 4px`.
+     - Hauteur : `18px`, largeur minimale `18px`.
+     - Rayon : `rounded-full`.
+     - Padding horizontal : `4px` (`px-1`).
+     - Fond : `bg-primary`, texte 11px gras `text-primary-foreground`.
+
+4. Bouton Raccourci Action dans Carte (Pilule) :
+   - Hauteur : `28px` (`h-7`).
+   - Padding : horizontal `12px` (`px-3`), gap entre texte et icône `6px` (`gap-1.5`).
+   - Rayon : `rounded-full`.
+   - Fond : `bg-primary-soft` (`#ECE7FF`).
+   - Texte et flèche diagonale : `text-primary` (`#6F57AB`), 13px Medium.
+   - Interaction : `active:scale-95`.
+
+6.2 Checkbox de Validation (Tâche Terminée)
+
+- Taille : `22px × 22px` (`size-[22px]`).
+- Marge haute : `3px` (`mt-[3px]`) pour aligner optiquement le cercle avec la première ligne de texte en 18px.
+- Bordure non cochée : `1.5px` continue, couleur `Color(0x6677706B)` (`border-muted-foreground/40`).
+- État coché :
+  - Disque plein lavande `bg-primary` en transition de zoom ressort (`scale: 0` vers `scale: 1`).
+  - Coche blanche vectorielle : trait de `3.5px`, `StrokeCap.round`, `StrokeJoin.round`.
+
+6.3 Champ de Saisie (Textarea de Capture)
+
+- Fond : transparent (`bg-transparent`).
+- Alignement : pleine largeur, suppression de redimensionnement (`resize-none`), sans bordure ni contour (`outline-none`).
+- Hauteur de base : 4 lignes visibles (`rows={4}`).
+- Curseur de frappe : teinté lavande (`caret-primary`).
+- Raccourci clavier : `Enter` (sans Shift) ou `Cmd/Ctrl + Enter` déclenche directement l'enregistrement.
+
+6.4 Carte de Pensée (`Card`)
+
+- Conteneur : `rounded-2xl` (rayon 24px), fond `bg-card` (`#FFFDFB`), ombre `shadow-card`.
+- Padding interne : `16px` (`p-4`).
+- Disposition en ligne (`flex gap-3`) :
+  - Colonne gauche : Bouton checkbox (22px).
+  - Colonne centrale : Zone extensible (`min-w-0 flex-1`) contenant le texte de la pensée et la rangée métadonnées (badge + date espacés de `gap-2`).
+  - Colonne droite : Bouton trois points `size-9` (36×36px), centré.
+
+6.5 Toast / SnackBar
+
+- Hauteur fixe : `56px` (`h-14`).
+- Position : flottant au bas de l'écran, ancré à gauche et droite `left: 16px, right: 16px`, bas `max(safeAreaBottom, 20px)`.
+- Rayon : `rounded-2xl` (24px).
+- Fond : `bg-foreground` (`#1A1511` en light).
+- Typographie : texte 15px en couleur inverse `#F9F6F2`.
+- Bouton « Annuler » : hauteur `40px` (`h-10`), padding `px-4`, texte 15px SemiBold lavande douce (`#ECE7FF`).
+- Durée de vie : 5000 ms avec bouton d'annulation, 2200 ms pour un simple feedback (« Copié »).
+
+6.6 Feuilles Modales (Action Sheets)
+
+Le design reproduit fidèlement la structure en deux blocs superposés d'iOS :
+- Marge latérale : `8px` (`inset-x-2`).
+- Marge basse : `max(safeAreaBottom, 8px)`.
+- Bloc Actions supérieures :
+  - Rayon : `rounded-2xl` (24px), fond `bg-popover`.
+  - Séparateurs : `divide-y divide-border` (liseré 1px `#E1DDD8`).
+  - En-tête : extrait de la pensée tronqué à 2 lignes (`line-clamp-2`), padding `px-5 py-3`, Newsreader 15px centré.
+  - Rangées d'actions : hauteur `56px` (`h-14`), padding `px-5`, taille 17px. Effet de pression : `active:bg-secondary`.
+  - Action destructrice (« Supprimer ») : texte `#D73337`.
+- Bloc Inférieur (« Fermer ») :
+  - Espacé de `8px` (`gap-2`) du premier bloc.
+  - Hauteur : `56px` (`h-14`).
+  - Rayon : `rounded-2xl` (24px), fond `bg-popover`.
+  - Texte : 17px SemiBold centré.
+
+---
+
+7. Spécifications Détaillées des Écrans
+
+7.1 Écran « Capture »
+
+- SafeArea :
+  - Haut : `max(safeAreaInsetTop, 20px)`.
+  - Bas : `max(safeAreaInsetBottom, 24px)`.
+  - Côtés : padding horizontal de `24px` (`px-6`).
+- En-tête (Header) :
+  - Hauteur `48px` (`h-12`).
+  - À gauche : Label « Plus tard » en Newsreader 18px Italic.
+  - À droite : Bouton de boîte de réception avec badge numérique dynamique.
+- Corps central :
+  - Centré verticalement dans l'espace restant, avec décalage vers le haut via padding inférieur de `96px` (`pb-24`) pour compenser le clavier virtuel.
+  - Sur-titre en lettres capitales : « CAPTUREZ MAINTENANT » (13px, Medium, lettre espacée).
+  - Zone de texte grand format (30px).
+  - Ligne d'action sous le champ (hauteur `48px`) :
+    - À gauche : Texte d'aide dynamique (« Pas de titre, pas de tri. » si vide, ou « X caractères » si saisi). Si une pensée vient d'être déposée : transition vers puce verte + « Déposé. Vous y reviendrez. ».
+    - À droite : Bouton pilule « Déposer ».
+- Pied de page :
+  - Texte centré discret : « Traitez plus tard, l'esprit libre. » (12px, 60% d'opacité).
+
+7.2 Écran « À traiter » (Inbox)
+
+- En-tête (Header) :
+  - Haut : `max(safeAreaInsetTop, 20px)`.
+  - Ligne de navigation supérieure : Bouton de retour avec chevron gauche « < Capturer ».
+  - Ligne de titre :
+    - Grand titre éditorial « À traiter » (Newsreader 38px).
+    - Compteur aligné sur la ligne de base (« X en attente », 14px, chiffres tabulaires).
+- Zone de liste :
+  - Défilement vertical avec padding bas de `128px` (`pb-32`) pour ne pas masquer la dernière carte avec le Toast.
+  - Espacement vertical entre cartes : `10px` (`gap-2.5`).
+- État Vide (« Esprit clair ») :
+  - Centré dans l'écran (`h-[60vh]`).
+  - Cercle vide en pointillés : `size-16` (64×64px), bordure tiretée 1px `border-dashed border-muted-foreground/30`.
+  - Titre : « Esprit clair. » (Newsreader 26px).
+  - Message : « Rien ne vous attend. Profitez du silence. » (15px, max-width 240px).
+  - Bouton d'action : « Capturer une pensée » (hauteur 44px, fond gris perle `bg-secondary`, texte 15px).
+
+---
+
+8. Moteur de Suggestions Contextuelles (`src/lib/thoughts.ts`)
+
+Pour reproduire le comportement exact de détection d'intention dans Flutter :
+
+```dart
+enum SuggestionKind { phone, mail, calendar, reminders, web, maps }
+
+class SuggestionRule {
+  final SuggestionKind kind;
+  final String label;
+  final String app;
+  final RegExp words;
+
+  const SuggestionRule({
+    required this.kind,
+    required this.label,
+    required this.app,
+    required this.words,
+  });
+}
+
+// Nettoyage des diacritiques (accents) avant analyse regex
+final rules = [
+  SuggestionRule(
+    kind: SuggestionKind.phone,
+    label: "Appeler",
+    app: "Téléphone",
+    words: RegExp(r'\b(appeler|appelle|telephoner|rappeler|tel)\b', caseSensitive: false),
+  ),
+  SuggestionRule(
+    kind: SuggestionKind.mail,
+    label: "Écrire",
+    app: "Mail",
+    words: RegExp(r'\b(mail|email|e-mail|ecrire a|repondre a)\b', caseSensitive: false),
+  ),
+  SuggestionRule(
+    kind: SuggestionKind.calendar,
+    label: "Planifier",
+    app: "Calendrier",
+    words: RegExp(r'\b(rdv|rendez-vous|reunion|anniversaire|reserver)\b', caseSensitive: false),
+  ),
+  SuggestionRule(
+    kind: SuggestionKind.reminders,
+    label: "Rappel",
+    app: "Rappels",
+    words: RegExp(r'\b(acheter|courses|payer|prendre|penser a|ne pas oublier|recuperer)\b', caseSensitive: false),
+  ),
+  SuggestionRule(
+    kind: SuggestionKind.web,
+    label: "Rechercher",
+    app: "Recherche Web",
+    words: RegExp(r'\b(rechercher|chercher|trouver|verifier|comment|pourquoi|quand)\b', caseSensitive: false),
+  ),
+  SuggestionRule(
+    kind: SuggestionKind.maps,
+    label: "Itinéraire",
+    app: "Plans",
+    words: RegExp(r'\b(aller a|adresse|itineraire|passer a|passer chez)\b', caseSensitive: false),
+  ),
+];
+```
+
+Règle de tri des pensées (`sortThoughts`) :
+1. Les pensées possédant une suggestion active remontent en premier.
+2. À égalité de statut de suggestion, tri chronologique descendant (`createdAt` le plus récent en haut).
+
+---
+
+9. Animations, Courbes & Transitions Physiques
+
+Les animations du web reposent sur Framer Motion avec des ressorts amortis (`Spring`). En Flutter, utilisez `SpringDescription` ou `AnimationController` avec courbes personnalisées.
+
+9.1 Constantes de Ressort Source
+
+1. Ressort Global de Navigation & Modales :
+   - Web source : `stiffness: 380, damping: 34`
+   - Équivalent Flutter :
+     ```dart
+     final navSpring = SpringDescription.withDampingRatio(
+       mass: 1.0,
+       stiffness: 380.0,
+       ratio: 0.87, // Amortissement doux et rapide
+     );
+     ```
+2. Rebond du Badge Numérique (Pulse) :
+   - Web source : `stiffness: 500, damping: 15`
+   - Sensation : rebond prononcé lors de l'incrémentation du nombre de pensées.
+3. Coche de Validation (Checkmark) :
+   - Web source : `stiffness: 600, damping: 20`
+   - Sensation : pop vif et instantané.
+4. Animation de la Pensée Déposée (« Flying Text ») :
+   - Translation simultanée : `x: +140px`, `y: -260px`, `scale: 0.2`, `opacity: 0`.
+   - Durée : `600ms`.
+   - Courbe de Bézier : `Cubic(0.6, 0.0, 0.3, 1.0)`.
+   - Point de pivot : coin supérieur droit (`Alignment.topRight`).
+   - Séquence temporelle :
+     - À $t = 0\text{ ms}$ : déclenchement du vol.
+     - À $t = 450\text{ ms}$ : pulsation du badge du panier supérieur droit.
+     - À $t = 900\text{ ms}$ : réinitialisation complète de l'état.
+
+9.2 Transition d'Écran (Capture $\leftrightarrow$ Inbox)
+
+- Entrée Inbox : glissement depuis la droite (`x: 100%` $\rightarrow$ `0%`).
+- Sortie Capture : recul discret vers la gauche avec fondu (`x: -30%`, `opacity: 0`).
+
+---
+
+10. Adaptabilité & Règles Responsive (Conteneur)
+
+Sur terminal mobile (iPhone), l'application occupe 100% de la hauteur dynamique (`h-dvh`) et de la largeur d'écran, en respectant les marges des encoches (`env(safe-area-inset-*)`).
+
+Sur iPad ou écran large (breakpoint Tailwind `sm` $\ge 640\text{px}$) :
+- L'application est restreinte dans un châssis centré simulant un iPhone :
+  - Largeur maximale : `430px` (`max-w-[430px]`, taille de référence iPhone 16 Pro Max).
+  - Hauteur fixe : `860px` (`h-[860px]`).
+  - Rayon de courbure : `rounded-[3rem]` (48px).
+  - Ombre flottante : `shadow-float`.
+  - Bordure liseré : `ring-1 ring-border` (1px `#E1DDD8`).
+
+---
+
+11. Incohérences Détectées dans le Code Source & Recommandations Flutter
+
+Lors de l'analyse intégrale du code, voici les spécificités et légers écarts relevés :
+
+1. Écart de teinte `theme-color` vs `background` :
+   - `src/routes/__root.tsx` déclare `<meta name="theme-color" content="#f8f5f0">`.
+   - `src/styles.css` déclare `--background: oklch(0.975 0.006 75)` dont la conversion exacte donne `#F9F6F2`.
+   - Recommandation Flutter : Utilisez exclusivement `#F9F6F2` pour le `Scaffold.backgroundColor` et la teinte de la barre d'état système pour une parfaite harmonie.
+2. Graisse de titre implicite :
+   - La balise `<h1 className="font-serif text-[38px] leading-none tracking-[-0.02em]">` dans l'inbox ne définit pas de classe de graisse (`font-bold` ou `font-medium`), héritant ainsi de `font-normal` (400) par la réinitialisation moderne de Tailwind. En Flutter, spécifiez explicitement `fontWeight: FontWeight.w400` sur le `TextStyle` de `Newsreader`.
+3. Contraste du texte sur le Toast :
+   - Le Toast utilise `bg-foreground` avec `text-background`. En mode sombre, le texte devient donc le fond sombre et le toast devient blanc cassé, ce qui correspond au comportement dynamique inverse d'un Toast natif.
+
+---
+
+Ce document reflète fidèlement l'intégralité du design et des composants de l'application. Vous pouvez le copier-coller directement dans votre fichier `docs/DESIGN_SYSTEM.md`.

@@ -1,58 +1,33 @@
-# Thought Inbox
+# Posé
 
-**A calm place to drop a thought and come back to it later.**
+**Libérer l’attention sans perdre les idées.**
 
-Thought Inbox is a personal Flutter app for capturing a thought the moment it arrives, without a title, a category or a due date. The interface is in French. iOS is the first target. The project is in development, and no App Store release is planned yet.
+Posé permet de déposer une pensée immédiatement et de la retrouver plus tard. La V1 vise une publication rapide sur l’App Store : iOS ≥17, français, stockage local et deux écrans simples, Capture et À traiter. Ancien nom du projet : Thought Inbox ; dossier et package Flutter : `thought_inbox`.
 
-## Visual reference
+## État du projet — 24 octobre 2026
 
-Two reference screens define the visual direction. They are design images, not yet reproduced in Flutter.
+L’app comporte les deux écrans de la V1 : Capture (dépôt, confirmation après sauvegarde) et À traiter (liste chronologique, « Marquer traitée », suppression avec « Annuler » pendant cinq secondes). Identité Posé, polices Newsreader et Inter Tight embarquées, palette validée, thème clair forcé. Stockage JSON local via `path_provider`, persistance vérifiée après relancement sur simulateur iOS.
 
-| Capture | To process |
-| --- | --- |
-| ![Capture reference](docs/design/reference/capture-empty.png) | ![To process reference](docs/design/reference/inbox-populated.png) |
+L’icône iOS utilise la plume silhouette de `assets/branding/` ; minimum iOS 17.0, iPhone et portrait uniquement. Restent avant publication : VoiceOver et essais sur appareil réel, signature, TestFlight et fiche App Store. Détails et preuves dans [MVP](docs/MVP.md).
 
-The direction is a warm background, editorial serif typography, sans-serif metadata, rounded white cards and a violet accent. Exact fonts, sizes and colours are not yet confirmed.
+Le détail des écarts, critères et prochaines étapes est dans [MVP](docs/MVP.md). Les anciennes références Lovable se consultent depuis [DESIGN](docs/DESIGN.md).
 
-## Current state (21 October 2026)
+## Lancer sur iOS
 
-**Implemented in code**
+Prévoir macOS, Xcode et un simulateur iPhone, ainsi qu’un SDK Flutter compatible avec la contrainte Dart `^3.13.5` de `pubspec.yaml`. Les anciennes validations mentionnaient Flutter 3.47.7 / Dart 3.13.5 ; ce n’est pas une vérification du SDK installé aujourd’hui.
 
-- Multi-line capture with a "Déposer" action. Input is trimmed, and blank input is refused.
-- Inbox sorted newest first, with archive and restore, and an Archives tab.
-- Local JSON storage through `path_provider`, written to a temporary file and then renamed.
-- Loading, empty and error states. A failed write keeps the typed text and shows a message.
-- Model, storage, controller and widget tests.
-
-**Not done yet**
-
-- The two reference screens are not reproduced. The current UI is a single Material page with bottom tabs (Inbox / Archives).
-- The circle action on each card, the menu, and the "Plus tard" signature are not implemented.
-- The three suggestion chips (Phone, Reminders, Web search) appear only in the design reference. They are not integrations.
-- The test suite was re-run on 22 October 2026 after the storage migration changes: 29 tests passed.
-- Manual validation on an iOS simulator, including a full app restart, is pending.
-
-**Out of scope for the MVP**
-
-Accounts, backend, sync, AI, notifications, voice capture, editing, permanent deletion, search and third-party integrations.
-
-## Data and privacy
-
-Thoughts are stored only on the device, in an unencrypted JSON file. The app does not back them up, and deleting the app can delete them.
-
-## Getting started
-
-Requirements: a Flutter SDK compatible with the Dart constraint in `pubspec.yaml` (`^3.13.5`), Xcode and an iOS simulator.
+Depuis le dépôt local :
 
 ```sh
-git clone https://github.com/BertrandM78/thought-inbox.git
-cd thought-inbox
+cd ~/Dev/APP/thought_inbox
 flutter pub get
 flutter devices
-flutter run -d <simulator-id>
+flutter run -d <identifiant-du-simulateur-iPhone>
 ```
 
-## Checks
+Pour une nouvelle copie : cloner `https://github.com/BertrandM78/thought-inbox.git`, puis lancer ces commandes depuis la racine clonée. Pour ouvrir le projet iOS : `open ios/Runner.xcworkspace`.
+
+## Vérifier un changement de code
 
 ```sh
 dart format --output=none --set-exit-if-changed lib test
@@ -60,18 +35,19 @@ flutter analyze
 flutter test
 ```
 
-Visual changes also need a comparison with the reference screens on iOS at the same logical width, plus checks for the keyboard, small screens, large text and VoiceOver. See [docs/DESIGN.md](docs/DESIGN.md).
+Un parcours sur iPhone/simulateur, incluant fermeture complète et relancement, complète les contrôles automatiques. Dernier résultat daté dans [MVP](docs/MVP.md).
 
-## Documentation
+## Données
 
-| File | Purpose |
+Les pensées sont enregistrées dans le conteneur local de l’application en JSON non chiffré par l’app. Aucune sauvegarde ou synchronisation applicative ; la désinstallation peut supprimer les données. Le comportement des sauvegardes système iOS reste à vérifier avant de faire une promesse de confidentialité publique. Ne pas stocker de données personnelles réelles dans les fixtures du dépôt.
+
+## Quatre documents de référence
+
+| Document | Rôle |
 | --- | --- |
-| [PRODUCT.md](docs/PRODUCT.md) | Product intent, scope and status of each decision |
-| [DESIGN.md](docs/DESIGN.md) | Visual contract, open states and validation steps |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Flutter structure, data compatibility and conventions |
-| [ROADMAP.md](docs/ROADMAP.md) | Milestones M0 to M4, validation criteria and open decisions |
-| [AUDIT.md](docs/AUDIT.md) | Inspection of the existing project and known gaps |
-| [MILESTONE-1.md](docs/MILESTONE-1.md) | Record of the first functional milestone |
-| [FIRST-PROMPT.md](docs/FIRST-PROMPT.md) | Starting prompt for the next milestone |
-| [SECURITY-REVIEW.md](docs/SECURITY-REVIEW.md) | Pre-publication secret scan |
-| [CLAUDE.md](CLAUDE.md) | Working rules for AI-assisted sessions |
+| [CLAUDE.md](CLAUDE.md) | Règles IA, workflow et architecture réelle |
+| [README.md](README.md) | Présentation et lancement |
+| [docs/MVP.md](docs/MVP.md) | Produit, périmètre strict, acceptation et livraison |
+| [docs/DESIGN.md](docs/DESIGN.md) | Design system, écrans et adaptation Flutter iOS |
+
+Le dépôt GitHub est public par choix de l’utilisateur. Aucune licence open source n’est accordée ; la visibilité publique ne vaut pas autorisation de réutilisation. Les polices Newsreader et Inter Tight sont distribuées sous SIL Open Font License 1.1 ; leurs licences accompagnent les fichiers dans `assets/fonts/` et sont enregistrées dans l’app.

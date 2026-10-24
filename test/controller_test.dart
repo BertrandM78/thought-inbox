@@ -154,6 +154,104 @@ void main() {
     expect(storage.saveCount, 0);
   });
 
+  test('supprime une pensée du stockage, distinct du traitement', () async {
+    final controller = newController();
+    await controller.load();
+    await controller.add('Gardée');
+    await controller.add('Jetée');
+
+    final removed = await controller.delete('id-2');
+
+    expect(removed?.text, 'Jetée');
+    expect(controller.inbox.map((t) => t.text), ['Gardée']);
+    expect(controller.archived, isEmpty);
+    expect(storage.saved.map((t) => t.id), ['id-1']);
+  });
+
+  test('annuler une suppression restaure la pensée à l’identique', () async {
+    final original = Thought(
+      id: 'ancienne',
+      text: 'Ligne 1\nLigne 2',
+      createdAt: DateTime.utc(2025, 3, 4, 5, 6, 7, 8),
+    );
+    storage = MemoryThoughtStorage([
+      original,
+      Thought(id: 'récente', text: 'Récente', createdAt: DateTime.utc(2026)),
+    ]);
+    final controller = newController();
+    await controller.load();
+
+    final removed = await controller.delete('ancienne');
+    await controller.undoDelete(removed!);
+
+    expect(controller.inbox.map((t) => t.id), ['récente', 'ancienne']);
+    expect(storage.saved.firstWhere((t) => t.id == 'ancienne'), original);
+    final relaunched = newController();
+    await relaunched.load();
+    expect(relaunched.inbox.last, original);
+  });
+
+  test('annuler conserve le statut traité et ne duplique pas', () async {
+    final done = Thought(
+      id: 'faite',
+      text: 'Traitée',
+      createdAt: DateTime.utc(2026),
+      archived: true,
+    );
+    storage = MemoryThoughtStorage([done]);
+    final controller = newController();
+    await controller.load();
+
+    await controller.undoDelete(done);
+    expect(storage.saved, [done]);
+
+    final removed = await controller.delete('faite');
+    await controller.undoDelete(removed!);
+    expect(storage.saved, [done]);
+    expect(controller.inbox, isEmpty);
+  });
+
+  test('un échec de suppression ou d’annulation ne perd rien', () async {
+    final controller = newController();
+    await controller.load();
+    await controller.add('Fragile');
+    storage.failSave = true;
+
+    await expectLater(
+      controller.delete('id-1'),
+      throwsA(isA<StorageWriteException>()),
+    );
+    expect(controller.inbox.map((t) => t.text), ['Fragile']);
+
+    storage.failSave = false;
+    final removed = await controller.delete('id-1');
+    storage.failSave = true;
+    await expectLater(
+      controller.undoDelete(removed!),
+      throwsA(isA<StorageWriteException>()),
+    );
+    expect(controller.inbox, isEmpty);
+
+    storage.failSave = false;
+    await controller.undoDelete(removed);
+    expect(storage.saved, [removed]);
+  });
+
+  test('des suppressions successives restent indépendantes', () async {
+    final controller = newController();
+    await controller.load();
+    await controller.add('A');
+    await controller.add('B');
+    await controller.add('C');
+
+    final a = await controller.delete('id-1');
+    await controller.delete('id-2');
+    await controller.undoDelete(a!);
+
+    expect(controller.inbox.map((t) => t.text), ['C', 'A']);
+    expect(storage.saved.map((t) => t.id).toSet(), {'id-1', 'id-3'});
+  });
+
   test('des mutations simultanées sont toutes conservées', () async {
     final controller = newController();
     await controller.load();

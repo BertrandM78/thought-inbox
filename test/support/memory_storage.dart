@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:thought_inbox/models/thought.dart';
 import 'package:thought_inbox/storage/thought_storage.dart';
 
@@ -11,6 +13,9 @@ class MemoryThoughtStorage implements ThoughtStorage {
   bool failSave = false;
   int saveCount = 0;
 
+  /// Si défini, chaque écriture attend sa complétion : simule un disque lent.
+  Completer<void>? saveGate;
+
   @override
   Future<List<Thought>> load() async {
     if (failLoad) throw const StorageReadException('échec simulé');
@@ -19,6 +24,7 @@ class MemoryThoughtStorage implements ThoughtStorage {
 
   @override
   Future<void> save(List<Thought> thoughts) async {
+    await saveGate?.future;
     if (failSave) throw const StorageWriteException('échec simulé');
     saveCount++;
     saved = List.of(thoughts);

@@ -34,6 +34,8 @@ class ThoughtInboxController extends ChangeNotifier {
   LoadStatus get status => _status;
   Object? get loadError => _loadError;
 
+  DateTime get now => _clock();
+
   /// Vrai pendant l’enregistrement d’une modification.
   bool get isSaving => _saving;
 
@@ -75,9 +77,37 @@ class ThoughtInboxController extends ChangeNotifier {
     }).then((_) => AddResult.added);
   }
 
+  /// Marque une pensée comme traitée : elle quitte [inbox] mais reste
+  /// enregistrée (`archived` porte ce statut en V1).
   Future<void> archive(String id) => _setArchived(id, true);
 
+  /// Sans accès dans l’interface V1 ; conservé pour les données historiques.
   Future<void> restore(String id) => _setArchived(id, false);
+
+  /// Supprime définitivement une pensée du stockage. Retourne la pensée
+  /// supprimée, à transmettre à [undoDelete], ou `null` si elle n’existait
+  /// plus. Lève [StorageWriteException] si l’écriture échoue.
+  Future<Thought?> delete(String id) async {
+    Thought? removed;
+    await _mutate((thoughts) {
+      for (final t in thoughts) {
+        if (t.id == id) removed = t;
+      }
+      return [
+        for (final t in thoughts)
+          if (t.id != id) t,
+      ];
+    });
+    return removed;
+  }
+
+  /// Réinsère une pensée supprimée à l’identique (identifiant, texte, date,
+  /// statut). Sans effet si une pensée de même identifiant existe déjà.
+  Future<void> undoDelete(Thought thought) => _mutate(
+    (thoughts) => thoughts.any((t) => t.id == thought.id)
+        ? thoughts
+        : [...thoughts, thought],
+  );
 
   Future<void> _setArchived(String id, bool value) => _mutate(
     (thoughts) => [

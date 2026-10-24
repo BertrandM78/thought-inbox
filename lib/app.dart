@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'state/thought_inbox_controller.dart';
 import 'ui/home_page.dart';
-
-/// Accent violet lavande de l’application.
-const lavender = Color(0xFF8E7CC3);
+import 'ui/theme/app_theme.dart';
 
 class ThoughtInboxApp extends StatelessWidget {
   const ThoughtInboxApp({super.key, required this.controller});
@@ -14,23 +13,14 @@ class ThoughtInboxApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Thought Inbox',
+      title: 'Posé',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: lavender),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: lavender,
-          brightness: Brightness.dark,
-        ),
-        inputDecorationTheme: const InputDecorationTheme(
-          border: OutlineInputBorder(),
-        ),
-      ),
+      // Thème clair uniquement, même si l’iPhone est en mode sombre.
+      theme: buildAppTheme(),
+      themeMode: ThemeMode.light,
+      locale: const Locale('fr'),
+      supportedLocales: const [Locale('fr')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: HomePage(controller: controller),
     );
   }

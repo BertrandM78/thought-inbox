@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="120 40 344 344" role="img" aria-labelledby="title desc">
+<title id="title">Posé — A. Plume silhouette</title>
+<desc id="desc">Reconstruction vectorielle manuelle de la silhouette en haut à gauche de la planche fournie. Tracé approché, non extrait géométriquement. Aplat lavande #6F57AB.</desc>
+<rect x="120" y="40" width="344" height="344" fill="#F9F6F2"/>
+<path id="feather-silhouette" fill="#6F57AB" d="M 405 84
+C 378 85 343 100 317 115
+L 311 124 L 314 118
+C 237 164 190 236 194 313
+C 193 324 190 335 187 344
+C 211 276 264 208 330 159
+C 279 208 234 271 207 320
+C 224 305 241 299 263 295
+C 297 286 327 265 347 239
+L 316 238
+C 358 229 382 204 395 157
+L 381 161
+C 402 144 410 112 409 89
+Q 409 83 405 84 Z"/>
+</svg>

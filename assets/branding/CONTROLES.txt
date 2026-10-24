@@ -1,0 +1,9 @@
+Posé — contrôles du 24 octobre 2026
+SVG : XML valide ; un tracé Bézier éditable ; sans bitmap embarqué, texte, filtre, gradient ni ombre.
+Icône : 1024 × 1024 px, RGB opaque, profil sRGB, coins carrés crème.
+Symbole PNG : 1024 × 1024 px, RGBA, fond transparent ; pixels opaques #6F57AB.
+Couleurs : lavande #6F57AB (111,87,171), crème #F9F6F2 (249,246,242).
+Les pixels de bord utilisent l’anticrénelage ; aucun dégradé décoratif.
+Comparaison des masques avec la grande silhouette A de la planche : intersection/union 97.05%.
+Cette mesure dépend du seuil de couleur et ne certifie pas une extraction géométrique exacte.
+Aperçu : icône à 552 px, puis 256, 128, 64 et 32 px (de haut en bas).

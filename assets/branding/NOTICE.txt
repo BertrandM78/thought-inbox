@@ -1,0 +1,17 @@
+Posé — A. Plume silhouette — choix provisoire
+
+Source : « Planche de design d’icône pour Posé.png », fournie par l’utilisateur ; grande icône A en haut à gauche.
+Reconstruction vectorielle manuelle à partir du raster, NON extraction géométrique exacte.
+Orientation, découpe centrale et encoches de A conservées ; pas de mélange avec C ou F.
+La planche utilise des effets ; les exports appliquent les aplats explicitement demandés : #6F57AB / #F9F6F2.
+
+pose-feather-silhouette.svg : symbole seul, fond transparent, courbes Bézier éditables.
+pose-icon-ios-source.svg : composition carrée, fond crème plein ; source de l’export iOS.
+pose-icon-ios-1024.png : export opaque sRGB 1024 × 1024, sans texte ni coins pré-arrondis.
+pose-feather-silhouette-transparent-1024.png : symbole RGBA 1024 × 1024 avec même cadrage.
+pose-branding-preview.png : aperçu aux différentes tailles, hors production.
+CONTROLES.txt : vérifications des fichiers.
+
+Rendu PNG depuis les SVG avec Sharp/libvips, largeur et hauteur 1024, profil sRGB ; retirer l’alpha pour l’icône iOS uniquement.
+Usage prévu : sources isolées dans assets/branding. Aucune intégration Flutter ou iOS effectuée.
+Ni pubspec.yaml ni ios/Runner/Assets.xcassets ne sont modifiés.
