@@ -52,10 +52,10 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> openMenuAndChoose(WidgetTester tester, String action) async {
-    await tester.tap(find.byTooltip('Actions pour cette pensée').first);
+  Future<void> deleteBySwipe(WidgetTester tester, Finder cardFinder) async {
+    await tester.drag(cardFinder, const Offset(-200, 0));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(action));
+    await tester.tap(find.text('Supprimer').first);
     await tester.pumpAndSettle();
   }
 
@@ -183,13 +183,7 @@ void main() {
     expect(find.textContaining('Téléphone'), findsNothing);
     expect(find.textContaining('Archive'), findsNothing);
     expect(find.text('Ancienne traitée'), findsNothing);
-    await tester.tap(find.byTooltip('Actions pour cette pensée'));
-    await tester.pumpAndSettle();
-    expect(find.text('Marquer traitée'), findsOneWidget);
-    expect(find.text('Supprimer'), findsOneWidget);
-    expect(find.textContaining('Archive'), findsNothing);
-    await tester.tap(find.text('Fermer'));
-    await tester.pumpAndSettle();
+    expect(find.byTooltip('Marquer traitée'), findsOneWidget);
     expect(storage.saveCount, 0);
   });
 
@@ -220,7 +214,7 @@ void main() {
     ]);
   });
 
-  testWidgets('marquer traitée depuis le menu ; un échec garde la carte', (
+  testWidgets('marquer traitée via le cercle ; un échec garde la carte', (
     tester,
   ) async {
     await launch(tester);
@@ -228,7 +222,8 @@ void main() {
     await openInbox(tester);
     storage.failSave = true;
 
-    await openMenuAndChoose(tester, 'Marquer traitée');
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
 
     expect(
       find.text('La pensée n’a pas pu être marquée traitée. Réessayez.'),
@@ -237,7 +232,8 @@ void main() {
     expect(find.text('Résistante'), findsOneWidget);
 
     storage.failSave = false;
-    await openMenuAndChoose(tester, 'Marquer traitée');
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
     expect(find.text('Résistante'), findsNothing);
     expect(storage.saved.single.archived, isTrue);
   });
@@ -254,7 +250,7 @@ void main() {
     await launch(tester);
     await openInbox(tester);
 
-    await openMenuAndChoose(tester, 'Supprimer');
+    await deleteBySwipe(tester, find.text('À garder finalement'));
 
     expect(find.text('À garder finalement'), findsNothing);
     expect(storage.saved, isEmpty);
@@ -275,7 +271,7 @@ void main() {
     await deposit(tester, 'Éphémère');
     await openInbox(tester);
 
-    await openMenuAndChoose(tester, 'Supprimer');
+    await deleteBySwipe(tester, find.text('Éphémère'));
     await tester.pump(const Duration(seconds: 4));
     expect(find.text('Annuler'), findsOneWidget);
     await tester.pump(const Duration(seconds: 1, milliseconds: 1));
@@ -294,8 +290,8 @@ void main() {
     await deposit(tester, 'Seconde');
     await openInbox(tester);
 
-    await openMenuAndChoose(tester, 'Supprimer');
-    await openMenuAndChoose(tester, 'Supprimer');
+    await deleteBySwipe(tester, find.text('Seconde'));
+    await deleteBySwipe(tester, find.text('Première'));
     expect(find.text('Annuler'), findsOneWidget);
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
@@ -313,7 +309,7 @@ void main() {
     await openInbox(tester);
     storage.failSave = true;
 
-    await openMenuAndChoose(tester, 'Supprimer');
+    await deleteBySwipe(tester, find.text('Tenace'));
 
     expect(
       find.text('La pensée n’a pas pu être supprimée. Réessayez.'),
@@ -332,7 +328,7 @@ void main() {
     final saved = storage.saved.single;
     await openInbox(tester);
 
-    await openMenuAndChoose(tester, 'Supprimer');
+    await deleteBySwipe(tester, find.text('Revenante'));
     storage.failSave = true;
     await tester.tap(find.text('Annuler'));
     await tester.pumpAndSettle();
@@ -432,10 +428,15 @@ void main() {
     await openInbox(tester);
     expect(tester.takeException(), isNull);
     await tester.scrollUntilVisible(
-      find.byTooltip('Actions pour cette pensée'),
+      find.byTooltip('Marquer traitée'),
       100,
     );
-    await openMenuAndChoose(tester, 'Supprimer');
+    final circleY = tester.getCenter(find.byTooltip('Marquer traitée')).dy;
+    await tester.drag(find.byTooltip('Marquer traitée'), const Offset(-200, 0));
+    await tester.pumpAndSettle();
+    // Tap the Supprimer button at x=264 (right portion of 288px content, 80px button)
+    await tester.tapAt(Offset(264, circleY));
+    await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
     expect(find.text('Annuler'), findsOneWidget);
   });
@@ -451,7 +452,7 @@ void main() {
     await openInbox(tester);
     expect(find.bySemanticsLabel('Capturer'), findsOneWidget);
     expect(find.bySemanticsLabel('Marquer traitée'), findsOneWidget);
-    expect(find.bySemanticsLabel('Actions pour cette pensée'), findsOneWidget);
+    expect(find.bySemanticsLabel('Options'), findsOneWidget);
     semantics.dispose();
   });
 }

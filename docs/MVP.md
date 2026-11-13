@@ -12,7 +12,8 @@ Déposer instantanément une pensée pour retrouver sa concentration, puis la re
 
 - iOS ≥17 uniquement, interface et messages en français uniquement, une seule identité visuelle claire définie dans [DESIGN](DESIGN.md), conservée même lorsque l’iPhone est en mode sombre.
 - Dépôt GitHub public par choix de l’utilisateur, sans licence open source accordée.
-- Deux écrans : Capture au lancement et À traiter. Aucun écran supplémentaire.
+- Premier lancement : écran d'accueil unique avant Capture ; aux lancements suivants, Capture est affiché directement.
+- Deux écrans principaux : Capture et À traiter. Aucun écran supplémentaire.
 - Saisie libre multiligne, sans titre, catégorie, échéance ou classement obligatoire ; bouton « Déposer ».
 - Stockage local persistant. Liste des pensées non traitées, du plus récent au plus ancien selon la date de création.
 - Consulter le texte et la date, marquer traitée, supprimer, naviguer entre les deux écrans.
@@ -47,6 +48,7 @@ Onboarding, compte, authentification, paywall, abonnement, backend, cloud/synchr
 
 ## Critères d’acceptation
 
+- [ ] Installation neuve : écran d’accueil affiché une seule fois, « Commencer » ouvre Capture ; aux lancements suivants, Capture est affiché directement sans onboarding.
 - [ ] Installation neuve : Capture immédiatement utilisable, tout le parcours en français, deux écrans et thème clair même avec l’iPhone en mode sombre ; installation sur iOS ≥17.
 - [ ] Texte blanc refusé sans écriture ; texte multiligne enregistré une seule fois malgré des appuis rapides ; compteur juste.
 - [ ] Capture → Déposer → À traiter : contenu et date corrects, ordre du plus récent au plus ancien, aucun classement contextuel.
@@ -64,7 +66,8 @@ Onboarding, compte, authentification, paywall, abonnement, backend, cloud/synchr
 
 | Sujet | Constat local | Travail restant |
 | --- | --- | --- |
-| Capture / À traiter | Deux vues (`IndexedStack`), brouillon conservé, aucun accès Archives | Geste de retour iOS par balayage non fourni (bouton « Capturer ») |
+| Onboarding | Écran d'accueil unique (plume, 3 rangées de fonctionnalités, bouton « Commencer ») ; marqueur fichier `onboarding_done` ; `showOnboarding: false` par défaut dans les tests | Validation sur simulateur et appareil réel à faire |
+| Capture / À traiter | Deux vues (`Stack` + `SlideTransition`), brouillon conservé, aucun accès Archives | Geste de retour iOS par balayage non fourni (bouton « Capturer ») |
 | Dépôt | Bouton inactif sur blanc, chargement et écriture ; double appui bloqué ; « X caractères » puis « Déposé. Vous y reviendrez. » après sauvegarde | — |
 | Traitement | Cercle et feuille d’actions « Marquer traitée » ; `archived=true` conservé, anciennes pensées traitées préservées | — |
 | Suppression | `delete` persisté, toast « Annuler » 5 s, échec d’annulation avec « Réessayer » | Fenêtre de 5 s non prolongée sous VoiceOver |

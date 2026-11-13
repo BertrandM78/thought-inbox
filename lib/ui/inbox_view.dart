@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../models/thought.dart';
 import '../state/thought_inbox_controller.dart';
@@ -10,6 +11,10 @@ import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'thought_card.dart';
 import 'toast.dart';
+
+const _feedbackEmail = 'contact@pose-app.fr';
+const _privacyUrl = 'https://pose-app.fr/privacy';
+const _appVersion = '1.0.0';
 
 /// Écran À traiter : pensées non traitées, de la plus récente à la plus
 /// ancienne.
@@ -123,7 +128,6 @@ class _InboxViewState extends State<InboxView> {
               now: _controller.now,
               enabled: false,
               onMarkDone: () {},
-              onMenu: () {},
             ),
           ),
         ),
@@ -187,15 +191,67 @@ class _InboxViewState extends State<InboxView> {
     }
   }
 
-  Future<void> _openMenu(Thought thought) async {
-    final action = await showThoughtActions(context, thought);
-    switch (action) {
-      case ThoughtAction.markDone:
-        await _markDone(thought);
-      case ThoughtAction.delete:
-        await _delete(thought);
-      case null:
-        break;
+  Future<void> _openAppMenu() async {
+    await showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _launchFeedbackEmail();
+            },
+            child: const Text('Envoyer un retour'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _launchPrivacyUrl();
+            },
+            child: const Text('Confidentialité'),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Version $_appVersion',
+              style: const TextStyle(fontSize: 13, color: mutedForeground),
+            ),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          isDefaultAction: true,
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Fermer'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchFeedbackEmail() async {
+    final uri = Uri(
+      scheme: 'mailto',
+      path: _feedbackEmail,
+      queryParameters: {'subject': 'Retour Posé'},
+    );
+    try {
+      if (!await launchUrl(uri)) {
+        _toast('Impossible d’ouvrir le client e-mail.');
+      }
+    } on Object {
+      _toast('Impossible d’ouvrir le client e-mail.');
+    }
+  }
+
+  Future<void> _launchPrivacyUrl() async {
+    try {
+      if (!await launchUrl(
+        Uri.parse(_privacyUrl),
+        mode: LaunchMode.externalApplication,
+      )) {
+        _toast('Impossible d’ouvrir la page de confidentialité.');
+      }
+    } on Object {
+      _toast('Impossible d’ouvrir la page de confidentialité.');
     }
   }
 
@@ -214,6 +270,7 @@ class _InboxViewState extends State<InboxView> {
               count: controller.inbox.length,
               showCount: ready,
               onCaptureTap: widget.onCaptureTap,
+              onMenuTap: _openAppMenu,
             ),
           ),
         ),
@@ -246,13 +303,15 @@ class _InboxViewState extends State<InboxView> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: FadeTransition(
                     opacity: animation,
-                    child: ThoughtCard(
-                      key: ValueKey(thought.id),
-                      thought: thought,
-                      now: controller.now,
-                      enabled: !controller.isSaving,
-                      onMarkDone: () => _markDone(thought),
-                      onMenu: () => _openMenu(thought),
+                    child: _SwipeToDeleteWrapper(
+                      onDelete: () => _delete(thought),
+                      child: ThoughtCard(
+                        key: ValueKey(thought.id),
+                        thought: thought,
+                        now: controller.now,
+                        enabled: !controller.isSaving,
+                        onMarkDone: () => _markDone(thought),
+                      ),
                     ),
                   ),
                 );
@@ -264,16 +323,118 @@ class _InboxViewState extends State<InboxView> {
   }
 }
 
+class _SwipeToDeleteWrapper extends StatefulWidget {
+  const _SwipeToDeleteWrapper({
+    required this.onDelete,
+    required this.child,
+  });
+
+  final VoidCallback onDelete;
+  final Widget child;
+
+  @override
+  State<_SwipeToDeleteWrapper> createState() => _SwipeToDeleteWrapperState();
+}
+
+class _SwipeToDeleteWrapperState extends State<_SwipeToDeleteWrapper>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  static const _kButtonW = 80.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  void _onDragUpdate(DragUpdateDetails d) {
+    if (d.delta.dx > 0 && _ctrl.value == 0) return;
+    _ctrl.value = (_ctrl.value - d.delta.dx / _kButtonW).clamp(0.0, 1.0);
+  }
+
+  void _onDragEnd(DragEndDetails d) {
+    if (!mounted) return;
+    final vel = d.velocity.pixelsPerSecond.dx;
+    final open = _ctrl.value > 0.5 || vel < -300;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _ctrl.value = open ? 1.0 : 0.0;
+    } else {
+      _ctrl.animateTo(open ? 1.0 : 0.0, curve: Curves.easeOut);
+    }
+  }
+
+  void _delete() => widget.onDelete();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+        animation: _ctrl,
+        builder: (ctx, child) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragUpdate: _onDragUpdate,
+          onHorizontalDragEnd: _onDragEnd,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              if (_ctrl.value > 0)
+                Positioned(
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    onTap: _delete,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(24),
+                        bottomRight: Radius.circular(24),
+                      ),
+                      child: Container(
+                        width: _kButtonW,
+                        color: destructive,
+                        alignment: Alignment.center,
+                        child: Text(
+                          'Supprimer',
+                          style: AppText.button.copyWith(
+                            color: const Color(0xFFFCFCFC),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              Transform.translate(
+                offset: Offset(-_ctrl.value * _kButtonW, 0),
+                child: child,
+              ),
+            ],
+          ),
+        ),
+        child: widget.child,
+      );
+  }
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.count,
     required this.showCount,
     required this.onCaptureTap,
+    required this.onMenuTap,
   });
 
   final int count;
   final bool showCount;
   final VoidCallback onCaptureTap;
+  final VoidCallback onMenuTap;
 
   /// Titre et compteur alignés sur la ligne de base ; empilés quand le texte
   /// est agrandi pour éviter de couper « À traiter ».
@@ -309,32 +470,69 @@ class _Header extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            button: true,
-            label: 'Capturer',
-            child: ExcludeSemantics(
-              child: InkWell(
-                onTap: onCaptureTap,
-                borderRadius: BorderRadius.circular(22),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 44),
-                  child: Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          CupertinoIcons.chevron_left,
-                          size: 20,
-                          color: primary,
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Semantics(
+                    button: true,
+                    label: 'Capturer',
+                    child: ExcludeSemantics(
+                      child: InkWell(
+                        onTap: onCaptureTap,
+                        borderRadius: BorderRadius.circular(22),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.chevron_left,
+                                size: 20,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Capturer',
+                                  style: AppText.back,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(width: 4),
-                        Flexible(child: Text('Capturer', style: AppText.back)),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
+                Transform.translate(
+                  offset: const Offset(8, 0),
+                  child: Semantics(
+                    button: true,
+                    label: 'Options',
+                    child: ExcludeSemantics(
+                      child: InkResponse(
+                        onTap: onMenuTap,
+                        radius: 22,
+                        highlightShape: BoxShape.circle,
+                        child: SizedBox.square(
+                          dimension: 44,
+                          child: Center(
+                            child: const Icon(
+                              CupertinoIcons.ellipsis,
+                              size: 20,
+                              color: mutedForeground,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),

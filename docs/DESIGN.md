@@ -101,10 +101,10 @@ Valeurs numériques ci-dessous attribuées à l’extraction. Le mapping des ray
 | Badge inbox | si nombre > 0 ; haut 6, droite 4 ; hauteur/min-largeur 18, padding horizontal 4 | Compteur réel, largeur flexible pour plusieurs chiffres ; pas de badge 5 fixe |
 | Cercle de traitement | visuel 22 × 22, décalage haut 3, bordure 1,5 à 40 % ; disque lavande et coche claire, trait 3,5 arrondi | Zone tactile étendue à 44 × 44 ; action « Marquer traitée », retrait seulement après sauvegarde |
 | Champ Capture | fond transparent, sans bordure, quatre lignes de base, curseur lavande | Multiligne et défilable ; Entrée insère une ligne sur iPhone, dépôt explicite par le bouton |
-| Carte | ivoire, rayon annoncé 24, padding 16 ; ligne gap 12, cercle, texte extensible, menu visuel 36 × 36 | Hauteur libre, pensée entière consultable, menu tactile 44 × 44 ; aucune suggestion |
+| Carte | ivoire, rayon annoncé 24, padding 16 ; ligne gap 12, cercle, texte extensible | Hauteur libre, pensée entière consultable ; glisser gauche révèle bouton « Supprimer » rouge 80 × hauteur carte ; aucune suggestion ; menu individuel supprimé |
 | Métadonnées | date sous la pensée ; gap 8 dans la rangée web badge/date | Garder la date et l’alignement du texte ; enlever le badge et son espace réservé |
 | Toast | fond graphite, texte crème, côtés 16, bas max(zone sûre, 20), rayon annoncé 24, hauteur source 56 | Hauteur minimale adaptable au texte ; erreurs compréhensibles ; action « Annuler » temporaire après suppression selon MVP |
-| Feuille d’actions | côtés 8, bas max(zone sûre, 8), rayon annoncé 24 ; séparateurs 1 ; aperçu centré padding 20/12 ; lignes 56 | « Marquer traitée », « Supprimer », bloc « Fermer » séparé de 8 ; pas d’édition/copie/intégration ajoutée |
+| Feuille d’actions | côtés 8, bas max(zone sûre, 8), rayon annoncé 24 ; séparateurs 1 ; aperçu centré padding 20/12 ; lignes 56 | Feuille individuelle par pensée supprimée ; remplacée par swipe gauche + bouton rouge. `CupertinoActionSheet` conservée pour le menu global `•••` (retour, confidentialité, version) |
 
 Le voile web de feuille utilise 25 % de graphite et un flou de 2 px : point de départ visuel, pas obligation de refaire un composant iOS natif au pixel. Les composants natifs peuvent mieux gérer la zone sûre et l’accessibilité ; documenter les écarts. La source prévoyait des toasts de 5000 ms avec annulation et 2200 ms pour un feedback simple ; le principe d’annulation temporaire après suppression est fixé par les décisions Posé, durée validée : cinq secondes. Les messages d’erreur simples restent 4 s. Le voile de feuille est repris (graphite 25 %) sans le flou de 2 px.
 
@@ -113,6 +113,10 @@ Le voile web de feuille utilise 25 % de graphite et un flou de 2 px : point de d
 Source CSS claire de carte : deux couches `0 1px 2px oklch(0.2 0.02 60 / 4%)` et `0 8px 24px -12px oklch(0.2 0.02 60 / 10%)`. Conserver l’intention de surface légèrement décollée. Les `BoxShadow` proposés dans la pièce avec graphite #1A1511 sont une approximation : la chroma 0,02 de l’ombre n’est pas celle du token texte (0,012), et CSS/Flutter ne rendent pas forcément le même flou.
 
 Ombre flottante source : `0 20px 50px -20px oklch(0.4 0.1 295 / 35%)`. Le #533E89 suggéré dans la pièce n’a pas été recalculé ici. Ne pas créer un second accent à partir de cette ombre. Le châssis de simulation auquel elle s’applique aussi est hors V1.
+
+## Écran d'accueil
+
+Premier lancement uniquement. Plume silhouette `assets/branding/pose-feather-silhouette-transparent-1024.png` à 56 × 56, centrée. Titre « Bienvenue sur posé. » en Newsreader Italic 26 (réutilise `AppText.emptyTitle` + `fontStyle: italic`). Sous-titre Inter Tight 15 discret (`AppText.help`). Trois rangées : icône `CupertinoIcons` en lavande 22 px (`pencil`, `tray`, `checkmark_circle`) + titre Inter Tight 16 w500 graphite + corps Inter Tight 14 discret. Bouton « Commencer » lavande pleine largeur 48, même style que « Déposer ». Mention « Sans compte. » Inter Tight 12 discret (`AppText.footer`). Même fond crème et zones sûres que les autres écrans ; défilement sur petits iPhone ou grands textes (`LayoutBuilder` + `ConstrainedBox(minHeight)`). Transition vers Capture : fondu 350 ms via `Navigator.pushReplacement` + `PageRouteBuilder`. Marqueur de complétion : fichier `onboarding_done` dans `getApplicationSupportDirectory()` (aucune dépendance supplémentaire).
 
 ## Écran Capture
 
@@ -128,10 +132,11 @@ Ombre flottante source : `0 20px 50px -20px oklch(0.4 0.1 295 / 35%)`. Le #533E8
 
 ## Écran À traiter
 
-- Même fond et zones sûres. En haut : retour « Capturer », puis titre Newsreader 38 et compteur « X en attente » aligné sur la ligne de base. À texte agrandi, permettre leur réorganisation.
+- Même fond et zones sûres. En haut : retour « Capturer » à gauche et bouton `•••` (`CupertinoIcons.ellipsis`, 20 px, `mutedForeground`, zone tactile 44 × 44) à droite ; titre Newsreader 38 et compteur « X en attente » alignés sur la ligne de base. À texte agrandi, permettre leur réorganisation.
+- Bouton `•••` : ouvre une `CupertinoActionSheet` native (iOS) avec « Envoyer un retour » (`mailto:contact@pose-app.fr`), « Confidentialité » (URL externe, Safari), version en bas de liste (`Inter Tight 13, mutedForeground`) ; fermeture « Fermer ». Dépendance `url_launcher` ; `LSApplicationQueriesSchemes` : `mailto` dans `Info.plist`.
 - L’extraction ne donne pas de marge horizontale explicite pour la liste. Le code et l’ancien document utilisent 16 comme point de départ ; **adaptation à valider**, pas une mesure source certifiée.
 - Liste verticale, espace entre cartes 10. Source : padding bas 128 pour un toast ; adapter aux messages et insets réels, sans créer un grand vide obligatoire.
-- Pensées du plus récent au plus ancien. Cercle = traiter ; menu = traiter/supprimer. Pas d’accès Archives, pas de barre d’onglets, pas de page de détail.
+- Pensées du plus récent au plus ancien. Cercle = traiter ; glisser gauche révèle bouton rouge « Supprimer » (80 px, coins droits arrondis 24) — sans suppression automatique, le bouton doit être tapé. Pas d’accès Archives, pas de barre d’onglets, pas de page de détail.
 - Dates relatives françaises avec horloge injectable ; vérifier les seuils et les jours locaux. Le code actuel assimile « hier » à une durée de 24–48 h : contrôler ce choix au passage de minuit avant de le présenter comme une date calendaire exacte.
 - Zéro pensée : cercle pointillé 64 × 64, « Esprit clair. », « Rien ne vous attend. Profitez du silence. », texte source de largeur maximale 240 ; bouton « Capturer une pensée » secondaire 44. Le centrage web sur 60vh ne devient pas une hauteur Flutter rigide.
 - Liste longue ou pensée longue : défilement, cartes de hauteur variable, actions toujours accessibles ; ne pas réduire les caractères pour faire entrer cinq cartes.
