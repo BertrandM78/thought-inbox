@@ -31,23 +31,28 @@ class _ThoughtCardState extends State<ThoughtCard>
   late final AnimationController _doneCtrl;
   bool _doneAnimating = false;
 
+  // 200 ms de pop + 300 ms de maintien = 500 ms au total.
+  // La fraction 0.4 délimite la fin du pop dans la plage [0, 1].
+  static const double _kPopFrac = 200 / 500;
+
   @override
   void initState() {
     super.initState();
     _doneCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 500),
     );
-    // Revient à l'état initial quand l'animation se termine (écriture réussie
-    // ou échouée : la carte disparaît ou le cercle se réinitialise).
+    // Déclenche l'archivage à la fin du maintien ; réinitialise le cercle
+    // en cas d'échec (la carte reste visible).
     _doneCtrl.addStatusListener((s) {
       if (s == AnimationStatus.completed && mounted) {
+        widget.onMarkDone();
         setState(() => _doneAnimating = false);
       }
     });
   }
 
-  /// Lance la validation optimiste du cercle et déclenche l'archivage.
+  /// Pop ressort (~200 ms), maintien de la coche (~300 ms), puis archivage.
   /// Sans effet si « Réduire les animations » est actif.
   void _handleMarkDone() {
     if (!widget.enabled || _doneAnimating) return;
@@ -59,7 +64,6 @@ class _ThoughtCardState extends State<ThoughtCard>
     _doneCtrl
       ..reset()
       ..forward();
-    widget.onMarkDone();
   }
 
   @override
@@ -86,7 +90,10 @@ class _ThoughtCardState extends State<ThoughtCard>
     return AnimatedBuilder(
       animation: _doneCtrl,
       builder: (_, _) {
-        final raw = Curves.easeOutBack.transform(_doneCtrl.value);
+        // Normalise la valeur vers [0,1] pour la phase pop uniquement ;
+        // au-delà de _kPopFrac le cercle reste à 1.0 (phase maintien).
+        final popT = (_doneCtrl.value / _kPopFrac).clamp(0.0, 1.0);
+        final raw = Curves.easeOutBack.transform(popT);
         final fill = raw.clamp(0.0, 1.0);
         final scale = raw.clamp(0.0, 1.1);
         return Transform.scale(

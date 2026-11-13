@@ -238,6 +238,77 @@ void main() {
     expect(storage.saved.single.archived, isTrue);
   });
 
+  testWidgets('marquer traitée propose un Annuler pendant cinq secondes', (
+    tester,
+  ) async {
+    await launch(tester);
+    await deposit(tester, 'Idée cochée');
+    await openInbox(tester);
+
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Idée cochée'), findsNothing);
+    expect(find.text('Pensée traitée.'), findsOneWidget);
+    expect(find.text('Annuler'), findsOneWidget);
+    expect(storage.saved.single.archived, isTrue);
+  });
+
+  testWidgets('annuler après traitement restaure la carte', (tester) async {
+    await launch(tester);
+    await deposit(tester, 'Idée cochée');
+    await openInbox(tester);
+
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Idée cochée'), findsOneWidget);
+    expect(storage.saved.single.archived, isFalse);
+    expect(find.text('Annuler'), findsNothing);
+  });
+
+  testWidgets('le toast de traitement expire et la pensée reste traitée', (
+    tester,
+  ) async {
+    await launch(tester);
+    await deposit(tester, 'Idée cochée');
+    await openInbox(tester);
+
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5, milliseconds: 1));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Annuler'), findsNothing);
+    expect(storage.saved.single.archived, isTrue);
+  });
+
+  testWidgets("un echec d’annulation de traitement propose Réessayer", (
+    tester,
+  ) async {
+    await launch(tester);
+    await deposit(tester, 'Idée cochée');
+    await openInbox(tester);
+
+    await tester.tap(find.byTooltip('Marquer traitée'));
+    await tester.pumpAndSettle();
+    storage.failSave = true;
+    await tester.tap(find.text('Annuler'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("La pensée n’a pas pu être restaurée."), findsOneWidget);
+    expect(storage.saved.single.archived, isTrue);
+
+    storage.failSave = false;
+    await tester.tap(find.text('Réessayer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Idée cochée'), findsOneWidget);
+    expect(storage.saved.single.archived, isFalse);
+  });
+
   testWidgets('supprimer puis annuler restaure la pensée à l’identique', (
     tester,
   ) async {

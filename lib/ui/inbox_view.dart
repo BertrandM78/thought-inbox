@@ -160,6 +160,26 @@ class _InboxViewState extends State<InboxView> {
       await _controller.archive(thought.id);
     } on Object {
       _toast('La pensée n’a pas pu être marquée traitée. Réessayez.');
+      return;
+    }
+    _toast(
+      'Pensée traitée.',
+      actionLabel: 'Annuler',
+      onAction: () => _undoMark(thought),
+      duration: undoWindow,
+    );
+  }
+
+  Future<void> _undoMark(Thought thought) async {
+    try {
+      await _controller.restore(thought.id);
+    } on Object {
+      _toast(
+        "La pensée n’a pas pu être restaurée.",
+        actionLabel: 'Réessayer',
+        onAction: () => _undoMark(thought),
+        duration: undoWindow,
+      );
     }
   }
 
@@ -201,7 +221,7 @@ class _InboxViewState extends State<InboxView> {
               Navigator.pop(ctx);
               _launchFeedbackEmail();
             },
-            child: const Text('Envoyer un retour'),
+            child: const Text('Contacter le développeur'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
