@@ -10,9 +10,9 @@ import 'theme/app_theme.dart';
 
 enum ThoughtAction { markDone, delete }
 
-/// Carte d’une pensée à traiter : cercle « Marquer traitée », texte entier,
-/// date relative et menu d’actions.
-class ThoughtCard extends StatelessWidget {
+/// Carte d'une pensée à traiter : cercle « Marquer traitée », texte entier,
+/// date relative et menu d'actions.
+class ThoughtCard extends StatefulWidget {
   const ThoughtCard({
     super.key,
     required this.thought,
@@ -27,6 +27,103 @@ class ThoughtCard extends StatelessWidget {
   final bool enabled;
   final VoidCallback onMarkDone;
   final VoidCallback onMenu;
+
+  @override
+  State<ThoughtCard> createState() => _ThoughtCardState();
+}
+
+class _ThoughtCardState extends State<ThoughtCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _doneCtrl;
+  bool _doneAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _doneCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    // Revient à l'état initial quand l'animation se termine (écriture réussie
+    // ou échouée : la carte disparaît ou le cercle se réinitialise).
+    _doneCtrl.addStatusListener((s) {
+      if (s == AnimationStatus.completed && mounted) {
+        setState(() => _doneAnimating = false);
+      }
+    });
+  }
+
+  /// Lance la validation optimiste du cercle et déclenche l'archivage.
+  /// Sans effet si « Réduire les animations » est actif.
+  void _handleMarkDone() {
+    if (!widget.enabled || _doneAnimating) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      widget.onMarkDone();
+      return;
+    }
+    setState(() => _doneAnimating = true);
+    _doneCtrl
+      ..reset()
+      ..forward();
+    widget.onMarkDone();
+  }
+
+  @override
+  void dispose() {
+    _doneCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Cercle vide ou animé selon l'état de validation.
+  Widget _buildCircle() {
+    if (!_doneAnimating) {
+      return Container(
+        width: 22,
+        height: 22,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: mutedForeground.withValues(alpha: quietAlpha),
+            width: 1.5,
+          ),
+        ),
+      );
+    }
+    return AnimatedBuilder(
+      animation: _doneCtrl,
+      builder: (_, _) {
+        final raw = Curves.easeOutBack.transform(_doneCtrl.value);
+        final fill = raw.clamp(0.0, 1.0);
+        final scale = raw.clamp(0.0, 1.1);
+        return Transform.scale(
+          scale: scale,
+          child: Container(
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: primary.withValues(alpha: fill),
+              border: Border.all(
+                color: mutedForeground.withValues(
+                  alpha: quietAlpha * (1.0 - fill),
+                ),
+                width: 1.5,
+              ),
+            ),
+            child: fill > 0.5
+                ? Icon(
+                    CupertinoIcons.checkmark,
+                    size: 13,
+                    color: primaryForeground.withValues(
+                      alpha: ((fill - 0.5) * 2.0).clamp(0.0, 1.0),
+                    ),
+                  )
+                : null,
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,18 +141,10 @@ class ThoughtCard extends StatelessWidget {
             padding: const EdgeInsets.only(left: 5, top: 8),
             child: _TapTarget(
               label: 'Marquer traitée',
-              onTap: enabled ? onMarkDone : null,
-              child: Container(
-                width: 22,
-                height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: mutedForeground.withValues(alpha: quietAlpha),
-                    width: 1.5,
-                  ),
-                ),
-              ),
+              onTap: (widget.enabled && !_doneAnimating)
+                  ? _handleMarkDone
+                  : null,
+              child: _buildCircle(),
             ),
           ),
           const SizedBox(width: 1),
@@ -65,10 +154,13 @@ class ThoughtCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(thought.text, style: AppText.thought),
+                  Text(widget.thought.text, style: AppText.thought),
                   const SizedBox(height: 8),
                   Text(
-                    formatRelativeThoughtDate(thought.createdAt, now: now),
+                    formatRelativeThoughtDate(
+                      widget.thought.createdAt,
+                      now: widget.now,
+                    ),
                     style: AppText.date,
                   ),
                 ],
@@ -79,7 +171,7 @@ class ThoughtCard extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6, right: 8, left: 4),
             child: _TapTarget(
               label: 'Actions pour cette pensée',
-              onTap: enabled ? onMenu : null,
+              onTap: widget.enabled ? widget.onMenu : null,
               child: const Icon(
                 CupertinoIcons.ellipsis,
                 size: 20,
@@ -124,8 +216,8 @@ class _TapTarget extends StatelessWidget {
   }
 }
 
-/// Feuille d’actions d’une pensée : « Marquer traitée », « Supprimer »,
-/// « Fermer ». Retourne l’action choisie, ou `null`.
+/// Feuille d'actions d'une pensée : « Marquer traitée », « Supprimer »,
+/// « Fermer ». Retourne l'action choisie, ou `null`.
 Future<ThoughtAction?> showThoughtActions(
   BuildContext context,
   Thought thought,

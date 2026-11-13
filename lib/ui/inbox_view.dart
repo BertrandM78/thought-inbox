@@ -28,10 +28,108 @@ class InboxView extends StatefulWidget {
 }
 
 class _InboxViewState extends State<InboxView> {
-  /// Réserve de la place sous la liste tant qu’un message est affiché.
+  /// Réserve de la place sous la liste tant qu'un message est affiché.
   int _visibleToasts = 0;
 
+  final _listKey = GlobalKey<SliverAnimatedListState>();
+
+  /// Copie locale des pensées affichées ; reflète l'état animé de la liste.
+  late List<Thought> _displayed;
+
+  /// Dernier statut connu du contrôleur, pour détecter la transition initiale.
+  late LoadStatus _prevStatus;
+
+  static const _exitDuration = Duration(milliseconds: 280);
+  static const _enterDuration = Duration(milliseconds: 180);
+
   ThoughtInboxController get _controller => widget.controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _displayed = List.of(_controller.inbox);
+    _prevStatus = _controller.status;
+    _controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onControllerChanged);
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+
+    final wasReady = _prevStatus == LoadStatus.ready;
+    final isReady = _controller.status == LoadStatus.ready;
+    _prevStatus = _controller.status;
+
+    if (!isReady) {
+      setState(() {});
+      return;
+    }
+
+    // Status is (or becomes) ready.
+    if (!wasReady || _listKey.currentState == null) {
+      // Initial load or list not yet in tree: sync without animation.
+      setState(() => _displayed = List.of(_controller.inbox));
+      return;
+    }
+
+    final next = _controller.inbox;
+    final noAnim = MediaQuery.disableAnimationsOf(context);
+
+    // Removals — iterate backwards so indices stay stable.
+    for (var i = _displayed.length - 1; i >= 0; i--) {
+      if (!next.any((t) => t.id == _displayed[i].id)) {
+        final removed = _displayed.removeAt(i);
+        _listKey.currentState!.removeItem(
+          i,
+          (ctx, anim) => _buildExitItem(removed, anim, noAnim),
+          duration: noAnim ? Duration.zero : _exitDuration,
+        );
+      }
+    }
+
+    // Insertions (undo delete) — iterate forward for correct positions.
+    for (var i = 0; i < next.length; i++) {
+      if (!_displayed.any((t) => t.id == next[i].id)) {
+        _displayed.insert(i, next[i]);
+        _listKey.currentState!.insertItem(i, duration: _enterDuration);
+      }
+    }
+
+    setState(() {});
+  }
+
+  /// Carte en sortie : fondu + effacement de hauteur vers le haut.
+  Widget _buildExitItem(
+    Thought thought,
+    Animation<double> animation,
+    bool skipAnim,
+  ) {
+    if (skipAnim) return const SizedBox.shrink();
+    return SizeTransition(
+      sizeFactor: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: FadeTransition(
+          opacity: animation,
+          child: IgnorePointer(
+            child: ThoughtCard(
+              thought: thought,
+              now: _controller.now,
+              enabled: false,
+              onMarkDone: () {},
+              onMenu: () {},
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   void _toast(
     String message, {
@@ -104,7 +202,6 @@ class _InboxViewState extends State<InboxView> {
   @override
   Widget build(BuildContext context) {
     final controller = _controller;
-    final thoughts = controller.inbox;
     final insets = MediaQuery.paddingOf(context);
     final bottom = max(insets.bottom, 24.0) + (_visibleToasts > 0 ? 76 : 0);
     final ready = controller.status == LoadStatus.ready;
@@ -114,7 +211,7 @@ class _InboxViewState extends State<InboxView> {
           padding: EdgeInsets.fromLTRB(16, max(insets.top, 20), 16, 0),
           sliver: SliverToBoxAdapter(
             child: _Header(
-              count: thoughts.length,
+              count: controller.inbox.length,
               showCount: ready,
               onCaptureTap: widget.onCaptureTap,
             ),
@@ -129,7 +226,7 @@ class _InboxViewState extends State<InboxView> {
                   : Text('Chargement de vos pensées…', style: AppText.help),
             ),
           )
-        else if (thoughts.isEmpty)
+        else if (_displayed.isEmpty)
           SliverPadding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, bottom),
             sliver: SliverFillRemaining(
@@ -140,18 +237,24 @@ class _InboxViewState extends State<InboxView> {
         else
           SliverPadding(
             padding: EdgeInsets.fromLTRB(16, 0, 16, bottom),
-            sliver: SliverList.separated(
-              itemCount: thoughts.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final thought = thoughts[index];
-                return ThoughtCard(
-                  key: ValueKey(thought.id),
-                  thought: thought,
-                  now: controller.now,
-                  enabled: !controller.isSaving,
-                  onMarkDone: () => _markDone(thought),
-                  onMenu: () => _openMenu(thought),
+            sliver: SliverAnimatedList(
+              key: _listKey,
+              initialItemCount: _displayed.length,
+              itemBuilder: (ctx, index, animation) {
+                final thought = _displayed[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: ThoughtCard(
+                      key: ValueKey(thought.id),
+                      thought: thought,
+                      now: controller.now,
+                      enabled: !controller.isSaving,
+                      onMarkDone: () => _markDone(thought),
+                      onMenu: () => _openMenu(thought),
+                    ),
+                  ),
                 );
               },
             ),
@@ -293,7 +396,7 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-/// Cercle pointillé décoratif de l’état vide.
+/// Cercle pointillé décoratif de l'état vide.
 class _DashedCirclePainter extends CustomPainter {
   const _DashedCirclePainter();
 
